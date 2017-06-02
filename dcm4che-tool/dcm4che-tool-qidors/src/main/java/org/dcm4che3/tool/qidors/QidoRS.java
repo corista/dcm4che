@@ -132,8 +132,11 @@ public class QidoRS {
     
     private String url;
 
+    /**
+     * Username and password functionality added by Kevin Dorosh
+     * Support for basic authentication schemes with orthanc server
+     */
     private static String username;
-
     private static String password;
     
     private ParserType parserType;
@@ -314,6 +317,10 @@ public class QidoRS {
         
         connection.setRequestProperty("charset", "utf-8");
 
+        /**
+         * Username and password functionality added by Kevin Dorosh
+         * Support for basic authentication schemes with orthanc server
+         */
         String userPass = username + ":" + password;
         StringBuilder sb = (new StringBuilder()).append("Basic ");
         String basicAuth = sb.append((Base64.encode(userPass.getBytes()))).toString();
@@ -731,8 +738,12 @@ public class QidoRS {
         return returnAttrs;
     }
 
+
+    /**
+     * Username and password functionality added by Kevin Dorosh
+     */
     public void setUsername(String username) {
-        username = username;
+        this.username = username;
     }
 
     public String getUsername() {
@@ -740,7 +751,7 @@ public class QidoRS {
     }
 
     public void setPassword(String password) {
-        password = password;
+        this.password = password;
     }
 
     public String getPassword() {
