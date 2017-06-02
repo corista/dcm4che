@@ -168,10 +168,16 @@
   </modules>
   <distributionManagement>
     <repository>
-      <id>www.dcm4che.org</id>
-      <name>dcm4che Repository</name>
-      <url>scp://www.dcm4che.org:443/home/maven2</url>
+      <id>internal</id>
+      <name>Internal Release Repository</name>
+      <url>http://maven.corista.local:8083/repository/internal</url>
     </repository>
+
+    <snapshotRepository>
+      <id>snapshots</id>
+      <name>Internal Snapshot Repository</name>
+      <url>http://maven.corista.local:8083/repository/snapshots</url>
+    </snapshotRepository>
   </distributionManagement>
   <repositories>
     <repository>
