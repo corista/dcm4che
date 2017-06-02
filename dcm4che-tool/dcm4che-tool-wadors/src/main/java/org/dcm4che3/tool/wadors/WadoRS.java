@@ -37,27 +37,14 @@
  * ***** END LICENSE BLOCK ***** */
 package org.dcm4che3.tool.wadors;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Templates;
@@ -123,6 +110,7 @@ public class WadoRS {
      */
     private static String username;
     private static String password;
+    private static final int HEADER_SIZE = 5;
 
     private boolean xmlIndent = false;
 
@@ -315,62 +303,92 @@ public class WadoRS {
                     boundary = (rdr.readLine());
                     boundary = boundary.substring(2, boundary.length());
                     rdr.close();
-                    FileInputStream fin = new FileInputStream(spool);
-                    new MultipartParser(boundary).parse(fin, new MultipartParser.Handler() {
+                    if(!main.isMetadata) {
+                        FileInputStream fin = new FileInputStream(spool);
 
-                        @Override
-                        public void bodyPart(int partNumber, MultipartInputStream partIn) throws IOException {
+                        new MultipartParser(boundary).parse(fin, new MultipartParser.Handler() {
 
-                            Map<String, List<String>> headerParams = partIn.readHeaderParams();
-                            String mediaType;
-                            String contentType = headerParams.get("content-type").get(0);
+                            @Override
+                            public void bodyPart(int partNumber, MultipartInputStream partIn) throws IOException {
 
-                            if (contentType.contains("transfer-syntax"))
-                                mediaType = contentType.split(";")[0];
-                            else
-                                mediaType = contentType;
+                                Map<String, List<String>> headerParams = partIn.readHeaderParams();
+                                String mediaType;
+                                String contentType = headerParams.get("content-type").get(0);
 
-                            // choose writer
-                            if (main.isMetadata) {
-                                main.writerType = ResponseWriter.XML;
+                                if (contentType.contains("transfer-syntax"))
+                                    mediaType = contentType.split(";")[0];
+                                else
+                                    mediaType = contentType;
 
-                            } else {
-                                if (mediaType.equalsIgnoreCase("application/dicom")) {
-                                    main.writerType = ResponseWriter.DICOM;
-                                } else if (isBulkMediaType(mediaType)) {
-                                    main.writerType = ResponseWriter.BULK;
+                                // choose writer
+                                if (main.isMetadata) {
+                                    main.writerType = ResponseWriter.XML;
+
                                 } else {
-                                    throw new IllegalArgumentException("Unknown media type " + "returned by server, media type = " + mediaType);
-                                }
-
-                            }
-                            try {
-                                main.writerType.readBody(main, partIn, headerParams);
-                            } catch (Exception e) {
-                                System.out.println("Error parsing media type to determine extension" + e);
-                            }
-                        }
-
-                        private boolean isBulkMediaType(String mediaType) {
-                            if (mediaType.contains("octet-stream"))
-                                return true;
-                            for (Field field : MediaTypes.class.getFields()) {
-                                try {
-                                    if (field.getType().equals(String.class)) {
-                                        String tmp = (String) field.get(field);
-                                        if (tmp.equalsIgnoreCase(mediaType))
-                                            return true;
+                                    if (mediaType.equalsIgnoreCase("application/dicom")) {
+                                        main.writerType = ResponseWriter.DICOM;
+                                    } else if (isBulkMediaType(mediaType)) {
+                                        main.writerType = ResponseWriter.BULK;
+                                    } else {
+                                        throw new IllegalArgumentException("Unknown media type " + "returned by server, media type = " + mediaType);
                                     }
+
+                                }
+                                try {
+                                    main.writerType.readBody(main, partIn, headerParams);
                                 } catch (Exception e) {
-                                    System.out.println("Error deciding media type " + e);
+                                    System.out.println("Error parsing media type to determine extension" + e);
                                 }
                             }
 
-                            return false;
+                            private boolean isBulkMediaType(String mediaType) {
+                                if (mediaType.contains("octet-stream"))
+                                    return true;
+                                for (Field field : MediaTypes.class.getFields()) {
+                                    try {
+                                        if (field.getType().equals(String.class)) {
+                                            String tmp = (String) field.get(field);
+                                            if (tmp.equalsIgnoreCase(mediaType))
+                                                return true;
+                                        }
+                                    } catch (Exception e) {
+                                        System.out.println("Error deciding media type " + e);
+                                    }
+                                }
+
+                                return false;
+                            }
+                        });
+                        fin.close();
+                        spool.delete();
+                    }
+
+
+                    else {
+                        BufferedWriter bw = new BufferedWriter(new FileWriter(main.outDir + "/results.xml"));
+
+                        Scanner scanner = new Scanner(spool);
+
+                        //eat header
+                        for(int c = 0; c < HEADER_SIZE; c++) {
+                            scanner.nextLine();
                         }
-                    });
-                    fin.close();
-                    spool.delete();
+
+                        while(scanner.hasNext()) {
+                            String nextLine = scanner.nextLine();
+
+                            //only write to file if there is valid xml content
+                            if (!nextLine.equals("") && !nextLine.contains(boundary)) {
+                                bw.write(nextLine + "\n");
+                            }
+                        }
+
+                        // cleanup
+                        bw.flush();
+                        bw.close();
+                        spool.delete();
+                    }
+
                 } catch (Exception e) {
                     System.out.println("Error parsing Server response - " + e);
                 }
