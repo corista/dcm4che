@@ -118,8 +118,10 @@ public class WadoRS {
 
     private String requestTimeOut;
 
+    /**
+     * Username and password functionality added by Kevin Dorosh
+     */
     private static String username;
-
     private static String password;
 
     private boolean xmlIndent = false;
@@ -260,6 +262,10 @@ public class WadoRS {
 
         connection.setRequestProperty("charset", "utf-8");
 
+        /**
+         * Username and password functionality added by Kevin Dorosh
+         * Support for basic authentication schemes with orthanc server
+         */
         String userPass = username + ":" + password;
         StringBuilder sb = (new StringBuilder()).append("Basic ");
         String basicAuth = sb.append((Base64.encode(userPass.getBytes()))).toString();
@@ -668,8 +674,11 @@ public class WadoRS {
         this.dumpHeader = b;
     }
 
+    /**
+     * Username and password functionality added by Kevin Dorosh
+     */
     public void setUsername(String username) {
-        username = username;
+        this.username = username;
     }
 
     public String getUsername() {
@@ -677,7 +686,7 @@ public class WadoRS {
     }
 
     public void setPassword(String password) {
-        password = password;
+        this.password = password;
     }
 
     public String getPassword() {
