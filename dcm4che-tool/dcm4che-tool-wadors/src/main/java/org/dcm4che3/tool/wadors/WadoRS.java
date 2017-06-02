@@ -67,6 +67,7 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -116,6 +117,10 @@ public class WadoRS {
     private File xsltFile;
 
     private String requestTimeOut;
+
+    private static String username;
+
+    private static String password;
 
     private boolean xmlIndent = false;
 
@@ -254,6 +259,11 @@ public class WadoRS {
         connection.setRequestMethod("GET");
 
         connection.setRequestProperty("charset", "utf-8");
+
+        String userPass = username + ":" + password;
+        StringBuilder sb = (new StringBuilder()).append("Basic ");
+        String basicAuth = sb.append((Base64.encode(userPass.getBytes()))).toString();
+        connection.setRequestProperty("Authorization", basicAuth);
 
         String[] acceptHeaders = compileAcceptHeader(main.acceptTypes);
 
@@ -656,5 +666,21 @@ public class WadoRS {
 
     public void setDumpHeaders(boolean b) {
         this.dumpHeader = b;
+    }
+
+    public void setUsername(String username) {
+        username = username;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setPassword(String password) {
+        password = password;
+    }
+
+    public String getPassword() {
+        return password;
     }
 }

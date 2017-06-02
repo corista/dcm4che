@@ -66,6 +66,7 @@ import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -130,6 +131,10 @@ public class QidoRS {
     private String offset="0";
     
     private String url;
+
+    private static String username;
+
+    private static String password;
     
     private ParserType parserType;
     
@@ -308,6 +313,11 @@ public class QidoRS {
         connection.setRequestMethod("GET");
         
         connection.setRequestProperty("charset", "utf-8");
+
+        String userPass = username + ":" + password;
+        StringBuilder sb = (new StringBuilder()).append("Basic ");
+        String basicAuth = sb.append((Base64.encode(userPass.getBytes()))).toString();
+        connection.setRequestProperty("Authorization", basicAuth);
         
         if(main.isJSON) {
             connection.setRequestProperty("Accept", "application/json");
@@ -719,6 +729,22 @@ public class QidoRS {
 
     public Attributes getReturnAttrs() {
         return returnAttrs;
+    }
+
+    public void setUsername(String username) {
+        username = username;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setPassword(String password) {
+        password = password;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
 
