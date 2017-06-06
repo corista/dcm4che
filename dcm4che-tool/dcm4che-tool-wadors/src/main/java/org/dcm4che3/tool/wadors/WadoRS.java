@@ -46,6 +46,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerFactory;
@@ -73,6 +75,10 @@ import org.dcm4che3.tool.wadors.test.WadoRSResponse;
 import org.dcm4che3.ws.rs.MediaTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * WADO-RS client tool.
@@ -365,7 +371,13 @@ public class WadoRS {
 
 
                     else {
-                        BufferedWriter bw = new BufferedWriter(new FileWriter(main.outDir + "/results.xml"));
+
+                        // WadoRS RetrieveMetaData looks like:  <ServiceHost>/studies/{SOPInstanceUID}/metadata
+                        String SOPInstanceUID = main.getUrl().split("studies/")[1].split("/")[0];
+
+                        String resultsFile = main.outDir + "/" + SOPInstanceUID + ".xml";
+
+                        BufferedWriter bw = new BufferedWriter(new FileWriter(resultsFile));
 
                         Scanner scanner = new Scanner(spool);
 
@@ -387,6 +399,7 @@ public class WadoRS {
                         bw.flush();
                         bw.close();
                         spool.delete();
+
                     }
 
                 } catch (Exception e) {
